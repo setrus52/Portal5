@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/Common/">
+    <Project Path="Common/Common.csproj" />
+  </Folder>
+  <Folder Name="/IDM/">
+    <Project Path="IDM/IDM.Application/IDM.Application.csproj" />
+    <Project Path="IDM/IDM.Domain/IDM.Domain.csproj" />
+    <Project Path="IDM/IDM.Infrastructure/IDM.Infrastructure.csproj" />
+    <Project Path="IDM/IDM.Transport/IDM.Transport.csproj" />
+  </Folder>
+</Solution>

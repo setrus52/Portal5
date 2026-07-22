@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.Negotiate" Version="10.0.10"/>
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.10"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.10"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.10"/>
+        <PackageReference Include="Microsoft.OpenApi" Version="2.7.5"/>
+        <PackageReference Include="Quartz" Version="3.18.2"/>
+        <PackageReference Include="Quartz.Extensions.Hosting" Version="3.18.2"/>
+
+        <PackageReference Include="Scalar.AspNetCore" Version="2.16.13"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\IDM.Application\IDM.Application.csproj"/>
+        <ProjectReference Include="..\IDM.Infrastructure\IDM.Infrastructure.csproj"/>
+    </ItemGroup>
+
+</Project>

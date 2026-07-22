@@ -1,0 +1,6 @@
+@IDM.Transport_HostAddress = http://localhost:5279
+
+GET {{IDM.Transport_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,19 @@
+﻿using Common.Repositories;
+using IDM.Application.Interfaces;
+using IDM.Infrastructure.Repositories;
+
+namespace IDM.Infrastructure.Services;
+
+public sealed class DepartmentService : IDepartmentService
+{
+    private readonly IDepartmentsRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public DepartmentService(
+        IDepartmentsRepository repository,
+        IUnitOfWork unitOfWork)
+    {
+        _repository = repository;
+        _unitOfWork = unitOfWork;
+    }
+}
