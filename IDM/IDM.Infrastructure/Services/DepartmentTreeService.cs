@@ -1,6 +1,7 @@
 ﻿using Common.Enums;
 using IDM.Application.DTO;
 using IDM.Application.Interfaces;
+using IDM.Application.Repositories;
 using IDM.Domain.Entities;
 using IDM.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -50,9 +51,7 @@ public class DepartmentTreeService(IDepartmentsRepository repository) : IDepartm
                 Location = level == 0 ? DepartmentLocation.Current : DepartmentLocation.Superior
             });
             if (department is { ParentGuid: { } parentGuid })
-            {
                 dList.AddRange(GetRootDepartmentsRecursive(departments, department.ParentGuid, level + 1));
-            }
         }
 
         return dList;

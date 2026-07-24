@@ -1,8 +1,8 @@
 ﻿using Common.Enums;
 
-namespace IDM.Domain.Entities;
+namespace IDM.Application.DTO;
 
-public class Normalization
+public class NormalizationDto
 {
     public int Id { get; set; }
     public NormalizationCategory Category { get; set; }

@@ -1,6 +1,6 @@
 ﻿namespace IDM.Application.Abstractions.Synchronization;
 
-public interface IDepartmentSynchronizationService
+public interface IDepartmentSyncService
 {
-    
+    Task SyncAsync();
 }

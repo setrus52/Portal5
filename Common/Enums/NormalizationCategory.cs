@@ -1,6 +1,6 @@
 ﻿namespace Common.Enums;
 
-public enum NormalizationType
+public enum NormalizationCategory
 {
     All,
     DepartmentName,

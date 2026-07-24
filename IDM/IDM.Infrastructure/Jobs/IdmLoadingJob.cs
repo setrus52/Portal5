@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using IDM.Application.Abstractions.Services;
+using Microsoft.Extensions.Logging;
 using Quartz;
 
 namespace IDM.Infrastructure.Jobs;
@@ -19,6 +20,16 @@ public class IdmLoadingJob : IJob
     public async Task Execute(IJobExecutionContext context)
     {
         _logger.LogInformation($"{nameof(IdmLoadingJob)} запущен...");
-        await _service.SynchronizeAsync(context.CancellationToken);
+
+        try
+        {
+            await _service.SynchronizeAsync(context.CancellationToken);
+            _logger.LogInformation($"{nameof(IdmLoadingJob)} завершен успешно");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"{nameof(IdmLoadingJob)} завершен с ошибкой");
+            throw;
+        }
     }
 }

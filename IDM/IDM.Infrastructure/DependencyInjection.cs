@@ -1,4 +1,5 @@
-﻿using IDM.Infrastructure.Repositories;
+﻿using IDM.Application.Repositories;
+using IDM.Infrastructure.Repositories;
 using IDM.Infrastructure.LoadingServices;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,9 +12,14 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        
+
+        
         services.AddScoped<IIdmLoadingService, IdmLoadingService>();
 
+
         services.AddScoped<IDepartmentsRepository, DepartmentRepository>();
+        services.AddScoped<INormalizationRepository, NormalizationRepository>();
         //services.AddScoped<IDepartmentTreeService>()
 
         return services;

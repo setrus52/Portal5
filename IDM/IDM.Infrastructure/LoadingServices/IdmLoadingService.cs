@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 
 namespace IDM.Infrastructure.LoadingServices;
 
-#region IDM DTO resords
+#region IDM DTO transport resords
 
 public record DepartmentsDto(
     string guid,
