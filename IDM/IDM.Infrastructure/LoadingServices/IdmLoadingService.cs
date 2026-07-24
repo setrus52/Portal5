@@ -71,13 +71,15 @@ public interface IIdmLoadingService
 
 public class IdmLoadingService : IIdmLoadingService
 {
-    private readonly string _baseUrl = $"http://idm.yuresk.local/api/";
+    private readonly string _baseUrl;
     private readonly EndpointGroup _idm;
 
     public IdmLoadingService(IOptions<EndpointOptions> options)
     {
         _idm = options.Value.Groups
             .First(x => x.Code == "Idm");
+
+        _baseUrl = _idm.Root;
     }
 
 
