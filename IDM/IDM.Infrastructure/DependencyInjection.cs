@@ -18,7 +18,7 @@ public static class DependencyInjection
         services.AddScoped<IIdmLoadingService, IdmLoadingService>();
 
 
-        services.AddScoped<IDepartmentsRepository, DepartmentRepository>();
+        services.AddScoped<IDepartmentRepository, DepartmentRepository>();
         services.AddScoped<INormalizationRepository, NormalizationRepository>();
         //services.AddScoped<IDepartmentTreeService>()
 

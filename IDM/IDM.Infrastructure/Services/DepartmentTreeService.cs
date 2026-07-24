@@ -8,9 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IDM.Infrastructure.Services;
 
-public class DepartmentTreeService(IDepartmentsRepository repository) : IDepartmentTreeService
+public class DepartmentTreeService(IDepartmentRepository repository) : IDepartmentTreeService
 {
-    private readonly IDepartmentsRepository _repository = repository;
+    private readonly IDepartmentRepository _repository = repository;
 
     public async Task<List<DepartmentTreeItemDto>> GetRootDepartmentsTreeAsync(
         CancellationToken cancellationToken = default)

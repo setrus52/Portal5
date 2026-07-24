@@ -3,7 +3,7 @@ using IDM.Domain.Entities;
 
 namespace IDM.Application.Repositories;
 
-public interface IDepartmentsRepository : IRepository<Department>
+public interface IDepartmentRepository : IRepository<Department>
 {
     Task<Department?> GetByGuidAsync(
         Guid guid,

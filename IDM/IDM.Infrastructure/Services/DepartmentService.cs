@@ -7,11 +7,11 @@ namespace IDM.Infrastructure.Services;
 
 public sealed class DepartmentService : IDepartmentService
 {
-    private readonly IDepartmentsRepository _repository;
+    private readonly IDepartmentRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
 
     public DepartmentService(
-        IDepartmentsRepository repository,
+        IDepartmentRepository repository,
         IUnitOfWork unitOfWork)
     {
         _repository = repository;
