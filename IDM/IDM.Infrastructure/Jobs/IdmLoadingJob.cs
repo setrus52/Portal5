@@ -5,30 +5,28 @@ using Quartz;
 namespace IDM.Infrastructure.Jobs;
 
 [DisallowConcurrentExecution]
-public class IdmLoadingJob : IJob
+public class IdmLoadingJob(
+    ILogger<IdmLoadingJob> logger,
+    IIdmSynchronizationService service)
+    : IJob
 {
-    private readonly ILogger<IdmLoadingJob> _logger;
-    private readonly IIdmSynchronizationService _service;
-
-    public IdmLoadingJob(ILogger<IdmLoadingJob> logger, IIdmSynchronizationService service)
+    public async Task Execute(
+        IJobExecutionContext context)
     {
-        _logger = logger;
-        _service = service;
-    }
-
-
-    public async Task Execute(IJobExecutionContext context)
-    {
-        _logger.LogInformation($"{nameof(IdmLoadingJob)} запущен...");
+        logger.LogInformation("{Job} запущен", nameof(IdmLoadingJob));
 
         try
         {
-            await _service.SynchronizeAsync(context.CancellationToken);
-            _logger.LogInformation($"{nameof(IdmLoadingJob)} завершен успешно");
+            await service
+                .SynchronizeAsync(context.CancellationToken);
+
+
+            logger.LogInformation("{Job} завершен успешно", nameof(IdmLoadingJob));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"{nameof(IdmLoadingJob)} завершен с ошибкой");
+            logger.LogError(ex, "{Job} завершен с ошибкой", nameof(IdmLoadingJob));
+
             throw;
         }
     }

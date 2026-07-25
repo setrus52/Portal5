@@ -2,5 +2,5 @@
 
 public interface IDepartmentSyncService
 {
-    Task SyncAsync();
+    Task SyncAsync(CancellationToken cancellationToken = default);
 }

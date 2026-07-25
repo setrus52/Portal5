@@ -2,5 +2,6 @@
 
 public interface IIdmSynchronizationService
 {
-    Task SynchronizeAsync(CancellationToken contextCancellationToken);
+    Task SynchronizeAsync(
+        CancellationToken cancellationToken = default);
 }

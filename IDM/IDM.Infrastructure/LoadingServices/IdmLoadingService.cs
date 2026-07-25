@@ -1,113 +1,80 @@
 ﻿using Common.Enums;
+using Flurl;
 using Flurl.Http;
+using IDM.Application.Synchronization.Records;
 using IDM.Infrastructure.Options.EndpointOptions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace IDM.Infrastructure.LoadingServices;
 
-#region IDM DTO transport resords
-
-public record DepartmentsDto(
-    string guid,
-    string name,
-    string? shortName,
-    string? parent,
-    string? supervisorGuid,
-    string type,
-    bool isActual);
-
-public record PersonDto(
-    string guid,
-    string code,
-    string surname,
-    string name,
-    string patronymic,
-    Gender gender,
-    DateTime birthday,
-    string login,
-    string domain,
-    string email,
-    string officeNumber,
-    string internalPhone,
-    string mobilePhone,
-    string photo);
-
-public record PositionDto(
-    string guid,
-    string name,
-    int orderPos);
-
-public record EmployeeDto(
-    string employeeGuid,
-    string personGuid,
-    string departmentGuid,
-    string positionGuid,
-    bool isMain,
-    bool isActual,
-    DateTime employmentDate,
-    DateTime? dismissalDate,
-    DateTime? nextPlannedVacationDate,
-    decimal? remainingDayCount);
-
-public record AbsenceDto(
-    string guid,
-    string employeeGuid,
-    DateTime startDate,
-    DateTime endDate,
-    string reason,
-    string description
-);
-
-#endregion
-
 public interface IIdmLoadingService
 {
-    Task<List<DepartmentsDto>> LoadDepartments();
-    Task<List<PersonDto>> LoadPersons();
-    Task<List<PositionDto>> LoadPositions();
-    Task<List<EmployeeDto>> LoadEmployees();
-    Task<List<AbsenceDto>> LoadAbsences();
+    Task<List<ExtDepartmentDto>> LoadDepartmentsAsync();
+    Task<List<ExtPersonDto>> LoadPersonsAsync();
+    Task<List<ExtPositionDto>> LoadPositionsAsync();
+    Task<List<ExtEmployeeDto>> LoadEmployeesAsync();
+    Task<List<ExtAbsenceDto>> LoadAbsencesAsync();
 }
 
 public class IdmLoadingService : IIdmLoadingService
 {
-    private readonly string _baseUrl;
     private readonly EndpointGroup _idm;
+    private readonly ILogger<IdmLoadingService> _logger;
 
-    public IdmLoadingService(IOptions<EndpointOptions> options)
+    public IdmLoadingService(ILogger<IdmLoadingService> logger, IOptions<EndpointOptions> options)
     {
-        _idm = options.Value.Groups
-            .First(x => x.Code == "Idm");
-
-        _baseUrl = _idm.Root;
+        _idm = options.Value.Groups.FirstOrDefault(x => x.Code == "Idm")
+               ?? throw new InvalidOperationException(
+                   "В appsettings.json отсутствует группа endpoint'ов с Code = 'Idm'.");
+        _logger = logger;
     }
 
 
-    public Task<List<DepartmentsDto>> LoadDepartments()
-        => LoadAsync<DepartmentsDto>("Departments");
+    public Task<List<ExtDepartmentDto>> LoadDepartmentsAsync()
+        => LoadAsync<ExtDepartmentDto>("Departments");
 
-    public Task<List<PersonDto>> LoadPersons()
-        => LoadAsync<PersonDto>("Persons");
+    public Task<List<ExtPersonDto>> LoadPersonsAsync()
+        => LoadAsync<ExtPersonDto>("Persons");
 
-    public Task<List<PositionDto>> LoadPositions()
-        => LoadAsync<PositionDto>("Positions");
+    public Task<List<ExtPositionDto>> LoadPositionsAsync()
+        => LoadAsync<ExtPositionDto>("Positions");
 
-    public Task<List<EmployeeDto>> LoadEmployees()
-        => LoadAsync<EmployeeDto>("Employees");
+    public Task<List<ExtEmployeeDto>> LoadEmployeesAsync()
+        => LoadAsync<ExtEmployeeDto>("Employees");
 
-    public Task<List<AbsenceDto>> LoadAbsences()
-        => LoadAsync<AbsenceDto>("Absences");
+    public Task<List<ExtAbsenceDto>> LoadAbsencesAsync()
+        => LoadAsync<ExtAbsenceDto>("Absences");
 
 
     private string GetUrl(string name)
     {
-        var point = _idm.Points.First(x => x.Name == name);
-        return $"{_idm.Root}{point.Point}";
+        var point = _idm.Points.FirstOrDefault(x => x.Name == name)
+                    ?? throw new InvalidOperationException(
+                        $"В конфигурации IDM (appsettings.json) не найден endpoint '{name}'.");
+
+        return _idm.Root.AppendPathSegment(point.Point);
     }
 
-    private Task<List<T>> LoadAsync<T>(string endpointName)
+    private async Task<List<T>> LoadAsync<T>(string endpointName)
     {
         var url = GetUrl(endpointName);
-        return url.GetJsonAsync<List<T>>();
+
+        try
+        {
+            _logger.LogInformation("Начата загрузка '{Endpoint}'. Url: {Url}", endpointName, url);
+
+            return await url.GetJsonAsync<List<T>>();
+        }
+        catch (FlurlHttpException ex)
+        {
+            _logger.LogError(ex, "HTTP-ошибка при обращении к '{Endpoint}'. Url: {Url}", endpointName, url);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Непредвиденная ошибка при обращении к '{Endpoint}'. Url: {Url}", endpointName, url);
+            throw;
+        }
     }
 }

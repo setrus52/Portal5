@@ -18,10 +18,9 @@ public class Repository<TEntity> : IRepository<TEntity>
         Set = context.Set<TEntity>();
     }
 
-    public virtual IQueryable<TEntity> Query()
-    {
-        return Set.AsNoTracking();
-    }
+    public virtual IQueryable<TEntity> Query() => Set.AsNoTracking();
+
+    public virtual IQueryable<TEntity> QueryTracking() => Set;
 
     public virtual ValueTask<TEntity?> GetByIdAsync(
         object id,
@@ -52,10 +51,7 @@ public class Repository<TEntity> : IRepository<TEntity>
 
         var entry = Context.Entry(entity);
 
-        if (entry.State == EntityState.Detached)
-        {
-            Set.Attach(entity);
-        }
+        if (entry.State == EntityState.Detached) Set.Attach(entity);
 
         entry.State = EntityState.Modified;
     }
@@ -64,10 +60,7 @@ public class Repository<TEntity> : IRepository<TEntity>
     {
         ArgumentNullException.ThrowIfNull(entities);
 
-        foreach (var entity in entities)
-        {
-            Update(entity);
-        }
+        foreach (var entity in entities) Update(entity);
     }
 
     public virtual void Delete(TEntity entity)
@@ -76,10 +69,7 @@ public class Repository<TEntity> : IRepository<TEntity>
 
         var entry = Context.Entry(entity);
 
-        if (entry.State == EntityState.Detached)
-        {
-            Set.Attach(entity);
-        }
+        if (entry.State == EntityState.Detached) Set.Attach(entity);
 
         Set.Remove(entity);
     }
@@ -88,10 +78,7 @@ public class Repository<TEntity> : IRepository<TEntity>
     {
         ArgumentNullException.ThrowIfNull(entities);
 
-        foreach (var entity in entities)
-        {
-            Delete(entity);
-        }
+        foreach (var entity in entities) Delete(entity);
     }
 
     public virtual Task<bool> ExistsAsync(
@@ -104,10 +91,8 @@ public class Repository<TEntity> : IRepository<TEntity>
     }
 
     public virtual Task<int> CountAsync(
-        CancellationToken cancellationToken = default)
-    {
-        return Set.CountAsync(cancellationToken);
-    }
+        CancellationToken cancellationToken = default) =>
+        Set.CountAsync(cancellationToken);
 
     public virtual Task<int> CountAsync(
         Expression<Func<TEntity, bool>> predicate,

@@ -6,6 +6,7 @@ public interface IRepository<TEntity>
     where TEntity : class
 {
     IQueryable<TEntity> Query();
+    IQueryable<TEntity> QueryTracking();
 
     ValueTask<TEntity?> GetByIdAsync(
         object id,

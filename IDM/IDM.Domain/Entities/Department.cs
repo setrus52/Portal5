@@ -42,7 +42,7 @@ public class Department
     /// <summary>
     /// GUID Родительского отдела
     /// </summary>
-    public Guid ParentGuid { get; set; }
+    public Guid? ParentGuid { get; set; }
 
     public Department? Parent { get; set; }
 
@@ -60,9 +60,9 @@ public class Department
     {
         if (Guid == parentGuid)
             throw new InvalidOperationException(
-                "Department cannot be parent of itself.");
+                "Подразделение не может быть родительским элементом для самого себя.");
 
-        ParentGuid = (Guid)parentGuid!;
+        ParentGuid = parentGuid;
         IsParentDepartmentDefinedManually = true;
     }
 

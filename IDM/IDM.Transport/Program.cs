@@ -1,9 +1,12 @@
+using IDM.Application.Abstractions.Services;
+using IDM.Application.Abstractions.Synchronization;
 using IDM.Infrastructure;
 using IDM.Infrastructure.Jobs;
 using IDM.Infrastructure.LoadingServices;
 using IDM.Infrastructure.Options.EndpointOptions;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Authentication.Negotiate;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
 
@@ -38,26 +41,23 @@ builder.Services.Configure<EndpointOptions>(
 
 #region Quartz
 
-// Добавляем Quartz
 builder.Services.AddQuartz(options =>
 {
-    // Создаём JOB
     var jobKey = new JobKey("IdmLoading", "Idm");
-    options.AddJob<IdmLoadingJob>();
 
-    // Создаем триггер
+    options.AddJob<IdmLoadingJob>(jobKey);
+
     options.AddTrigger(opts => opts
         .ForJob(jobKey)
         .WithIdentity("IdmLoadingJob-trigger")
         .WithSimpleSchedule(x => x
-            .WithIntervalInHours(3) // Каждые 3 часа
-            //.WithIntervalInMinutes(1)
-            .RepeatForever())
-    );
+            //.WithIntervalInHours(3)
+            .WithIntervalInSeconds(30)
+            .RepeatForever()));
 });
 
-// Добавляем хост-сервис для Quartz
-builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+
+builder.Services.AddQuartzHostedService(options => { options.WaitForJobsToComplete = true; });
 
 #endregion
 
@@ -87,12 +87,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/loadidm", async (IIdmLoadingService service) =>
+/*app.MapGet("/loadidm", async (IIdmLoadingService service) =>
     {
-        var departments = await service.LoadDepartments();
+        var departments = await service.LoadDepartmentsAsync();
         return Results.Ok(departments);
     })
-    .WithName("LoadIdm");
+    .WithName("LoadIdm");*/
+
+/*app.MapGet("/test", async ([FromServices] IIdmSynchronizationService service) =>
+{
+    await service.SynchronizeAsync();
+    return Results.Ok();
+});*/
 
 app.MapGet("/heart", () => Results.Ok(new
     {

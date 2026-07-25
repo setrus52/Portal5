@@ -3,7 +3,7 @@
 public enum NormalizationCategory
 {
     All,
-    DepartmentName,
-    PositionName,
-    PhoneNumber
+    Department,
+    Position,
+    PhoneBranch
 }
