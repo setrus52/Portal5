@@ -10,7 +10,7 @@ public class IdmSynchronizationService(
     IDepartmentSyncService departmentSyncService,
     //IPersonSyncService personSyncService,
     //IEmployeeSyncService employeeSyncService,
-    //IPositionSyncService positionSyncService,
+    IPositionSyncService positionSyncService,
     //IDepartmentTreeUpdater departmentTreeUpdater,
     //ISupervisorSyncService supervisorSyncService,
     //IAbsenceSyncService absenceSyncService 
@@ -29,19 +29,19 @@ public class IdmSynchronizationService(
                 "Полная синхронизация IDM начата");
 
 
-            await departmentSyncService
+            var departments = await departmentSyncService
                 .SyncAsync(cancellationToken);
 
 
             /*await employeeSyncService
+                .SyncAsync(cancellationToken);*/
+
+
+            var positions = await positionSyncService
                 .SyncAsync(cancellationToken);
 
 
-            await positionSyncService
-                .SyncAsync(cancellationToken);
-
-
-            await departmentTreeUpdater
+            /*await departmentTreeUpdater
                 .UpdateAsync(cancellationToken);*/
 
             // УДАЛИТЬ!!!
@@ -51,10 +51,6 @@ public class IdmSynchronizationService(
             var count = await unitOfWork.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("EF сохранил изменений: {Count}", count);
-
-            await unitOfWork
-                .SaveChangesAsync(cancellationToken);
-
 
             _logger.LogInformation(
                 "Полная синхронизация IDM завершена");

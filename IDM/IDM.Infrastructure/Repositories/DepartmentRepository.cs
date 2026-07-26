@@ -5,7 +5,7 @@ using IDM.Domain.Entities;
 
 namespace IDM.Infrastructure.Repositories;
 
-public sealed class DepartmentRepository(AppDbContext context)
+public class DepartmentRepository(AppDbContext context)
     : Repository<Department>(context), IDepartmentRepository
 {
     public Task<Department?> GetByGuidAsync(Guid guid, CancellationToken cancellationToken = default)

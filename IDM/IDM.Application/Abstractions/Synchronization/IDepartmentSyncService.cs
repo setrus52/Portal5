@@ -1,6 +1,8 @@
-﻿namespace IDM.Application.Abstractions.Synchronization;
+﻿using IDM.Domain.Entities;
+
+namespace IDM.Application.Abstractions.Synchronization;
 
 public interface IDepartmentSyncService
 {
-    Task SyncAsync(CancellationToken cancellationToken = default);
+    Task<List<Department>> SyncAsync(CancellationToken cancellationToken = default);
 }

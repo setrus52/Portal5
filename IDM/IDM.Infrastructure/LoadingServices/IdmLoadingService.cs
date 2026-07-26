@@ -10,11 +10,11 @@ namespace IDM.Infrastructure.LoadingServices;
 
 public interface IIdmLoadingService
 {
-    Task<List<ExtDepartmentDto>> LoadDepartmentsAsync();
-    Task<List<ExtPersonDto>> LoadPersonsAsync();
-    Task<List<ExtPositionDto>> LoadPositionsAsync();
-    Task<List<ExtEmployeeDto>> LoadEmployeesAsync();
-    Task<List<ExtAbsenceDto>> LoadAbsencesAsync();
+    Task<List<ExtDepartmentDto>> LoadDepartmentsAsync(CancellationToken cancellationToken = default);
+    Task<List<ExtPersonDto>> LoadPersonsAsync(CancellationToken cancellationToken = default);
+    Task<List<ExtPositionDto>> LoadPositionsAsync(CancellationToken cancellationToken = default);
+    Task<List<ExtEmployeeDto>> LoadEmployeesAsync(CancellationToken cancellationToken = default);
+    Task<List<ExtAbsenceDto>> LoadAbsencesAsync(CancellationToken cancellationToken = default);
 }
 
 public class IdmLoadingService : IIdmLoadingService
@@ -31,20 +31,20 @@ public class IdmLoadingService : IIdmLoadingService
     }
 
 
-    public Task<List<ExtDepartmentDto>> LoadDepartmentsAsync()
-        => LoadAsync<ExtDepartmentDto>("Departments");
+    public Task<List<ExtDepartmentDto>> LoadDepartmentsAsync(CancellationToken cancellationToken = default)
+        => LoadAsync<ExtDepartmentDto>("Departments", cancellationToken);
 
-    public Task<List<ExtPersonDto>> LoadPersonsAsync()
-        => LoadAsync<ExtPersonDto>("Persons");
+    public Task<List<ExtPersonDto>> LoadPersonsAsync(CancellationToken cancellationToken = default)
+        => LoadAsync<ExtPersonDto>("Persons", cancellationToken);
 
-    public Task<List<ExtPositionDto>> LoadPositionsAsync()
-        => LoadAsync<ExtPositionDto>("Positions");
+    public Task<List<ExtPositionDto>> LoadPositionsAsync(CancellationToken cancellationToken = default)
+        => LoadAsync<ExtPositionDto>("Positions", cancellationToken);
 
-    public Task<List<ExtEmployeeDto>> LoadEmployeesAsync()
-        => LoadAsync<ExtEmployeeDto>("Employees");
+    public Task<List<ExtEmployeeDto>> LoadEmployeesAsync(CancellationToken cancellationToken = default)
+        => LoadAsync<ExtEmployeeDto>("Employees", cancellationToken);
 
-    public Task<List<ExtAbsenceDto>> LoadAbsencesAsync()
-        => LoadAsync<ExtAbsenceDto>("Absences");
+    public Task<List<ExtAbsenceDto>> LoadAbsencesAsync(CancellationToken cancellationToken = default)
+        => LoadAsync<ExtAbsenceDto>("Absences", cancellationToken);
 
 
     private string GetUrl(string name)
@@ -56,7 +56,7 @@ public class IdmLoadingService : IIdmLoadingService
         return _idm.Root.AppendPathSegment(point.Point);
     }
 
-    private async Task<List<T>> LoadAsync<T>(string endpointName)
+    private async Task<List<T>> LoadAsync<T>(string endpointName, CancellationToken cancellationToken = default)
     {
         var url = GetUrl(endpointName);
 
@@ -64,7 +64,7 @@ public class IdmLoadingService : IIdmLoadingService
         {
             _logger.LogInformation("Начата загрузка '{Endpoint}'. Url: {Url}", endpointName, url);
 
-            return await url.GetJsonAsync<List<T>>();
+            return await url.GetJsonAsync<List<T>>(cancellationToken: cancellationToken);
         }
         catch (FlurlHttpException ex)
         {

@@ -19,9 +19,5 @@ public class PositionConfig : IEntityTypeConfiguration<Position>
             .IsRequired()
             .HasMaxLength(1000);
 
-        builder.Property(p => p.IsActual)
-            .IsRequired()
-            .HasColumnType("bit")
-            .HasDefaultValue(true);
     }
 }

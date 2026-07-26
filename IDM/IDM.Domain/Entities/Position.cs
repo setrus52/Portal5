@@ -17,8 +17,6 @@ public class Position
     /// </summary>
     public int? Order { get; set; }
 
-    public bool IsActual { get; set; }
-
     /// <summary>
     /// Список сотрудник сотрудников в этой должности
     /// </summary>

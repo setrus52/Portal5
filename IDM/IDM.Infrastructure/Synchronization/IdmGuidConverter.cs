@@ -9,8 +9,8 @@ public class IdmGuidConverter : IIdmGuidConverter
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("Значение GUID не может быть пустым.", nameof(value));
 
-        if (!value.StartsWith("1-"))
-            throw new FormatException($"Некорректный внешний GUID '{value}'. Ожидался префикс '1-'.");
+        /*if (!value.StartsWith("1-") || !value.StartsWith("2-"))
+            throw new FormatException($"Некорректный внешний GUID '{value}'. Ожидался префикс '1-' или '2-'.");*/
 
         return !Guid.TryParse(value.AsSpan(2), out var guid)
             ? throw new FormatException($"Некорректный GUID '{value}'.")

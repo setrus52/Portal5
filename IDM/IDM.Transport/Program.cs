@@ -10,6 +10,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
 
+/*Ctrl + T — получить последние изменения.
+    Работаешь с кодом.
+    Ctrl + K — Commit.
+    Пишешь осмысленное сообщение, например:
+Add DepartmentSynchronizationService
+Refactor IdmLoadingJob
+Implement department tree update
+Ctrl + Shift + K — Push.*/
+
 var builder = WebApplication.CreateBuilder(args);
 
 #region ПОДКЛЮЧАЕМ БД
@@ -57,7 +66,7 @@ builder.Services.AddQuartz(options =>
 });
 
 
-builder.Services.AddQuartzHostedService(options => { options.WaitForJobsToComplete = true; });
+builder.Services.AddQuartzHostedService(options => { options.WaitForJobsToComplete = true; }); /**/
 
 #endregion
 

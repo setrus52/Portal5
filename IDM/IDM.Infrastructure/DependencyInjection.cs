@@ -24,15 +24,17 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddScoped<IIdmLoadingService, IdmLoadingService>();
+        /*services.AddScoped<IIdmLoadingService, IdmLoadingService>();
         services.AddScoped<IIdmDepartmentNormalizer, IdmDepartmentNormalizer>();
         services.AddScoped<INormalizationProvider, NormalizationProvider>();
         services.AddScoped<IDepartmentNameNormalizer, DepartmentNameNormalizer>();
         services.AddScoped<IDepartmentRepository, DepartmentRepository>();
         services.AddScoped<INormalizationRepository, NormalizationRepository>();
         services.AddScoped<IIdmSynchronizationService, IdmSynchronizationService>();
-        //services.AddScoped<,>()
-
+        services.AddScoped<IPositionRepository, PositionRepository>();
+        services.AddScoped<IPositionSyncService, PositionSyncService>();
+        services.AddScoped<IIdmPositionNormalizer, IdmPositionNormalizer>();
+        services.AddScoped<IPositionNameNormalizer, PositionNameNormalizer>();
         services.AddScoped<IDepartmentSyncService, DepartmentSyncService>();
 
         services.AddScoped<IIdmGuidConverter, IdmGuidConverter>();
@@ -40,7 +42,104 @@ public static class DependencyInjection
 
         services.AddScoped<DbContext>(provider =>
             provider.GetRequiredService<AppDbContext>());
-        services.AddScoped<IdmLoadingJob>();
+        services.AddScoped<IdmLoadingJob>();*/
+
+        // DbContext
+        services.AddDatabase();
+
+        // IDM
+        services.AddIdm();
+
+        // Репозитории
+        services.AddRepositories();
+
+        // Нормализация
+        services.AddNormalization();
+
+        // Сервисы синхронизации
+        services.AddSynchronization();
+
+        // Quartz
+        services.AddJobs();
+
         return services;
     }
+
+    #region DbContext
+
+    private static IServiceCollection AddDatabase(this IServiceCollection services)
+    {
+        services.AddScoped<DbContext>(p => p.GetRequiredService<AppDbContext>());
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        return services;
+    }
+
+    #endregion
+
+    #region Репозитории
+
+    private static IServiceCollection AddRepositories(this IServiceCollection services)
+    {
+        services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+        services.AddScoped<IPositionRepository, PositionRepository>();
+        services.AddScoped<INormalizationRepository, NormalizationRepository>();
+
+        return services;
+    }
+
+    #endregion
+
+    #region Нормализация
+
+    private static IServiceCollection AddNormalization(this IServiceCollection services)
+    {
+        services.AddScoped<INormalizationProvider, NormalizationProvider>();
+
+        services.AddScoped<IIdmDepartmentNormalizer, IdmDepartmentNormalizer>();
+        services.AddScoped<IDepartmentNameNormalizer, DepartmentNameNormalizer>();
+
+        services.AddScoped<IIdmPositionNormalizer, IdmPositionNormalizer>();
+        services.AddScoped<IPositionNameNormalizer, PositionNameNormalizer>();
+
+        return services;
+    }
+
+    #endregion
+
+    #region IDM
+
+    private static IServiceCollection AddIdm(this IServiceCollection services)
+    {
+        services.AddScoped<IIdmLoadingService, IdmLoadingService>();
+        services.AddScoped<IIdmGuidConverter, IdmGuidConverter>();
+
+        return services;
+    }
+
+    #endregion
+
+    #region Сервисы синхронизации
+
+    private static IServiceCollection AddSynchronization(this IServiceCollection services)
+    {
+        services.AddScoped<IDepartmentSyncService, DepartmentSyncService>();
+        services.AddScoped<IPositionSyncService, PositionSyncService>();
+        services.AddScoped<IIdmSynchronizationService, IdmSynchronizationService>();
+
+        return services;
+    }
+
+    #endregion
+
+    #region Quartz
+
+    private static IServiceCollection AddJobs(this IServiceCollection services)
+    {
+        services.AddScoped<IdmLoadingJob>();
+
+        return services;
+    }
+
+    #endregion
 }

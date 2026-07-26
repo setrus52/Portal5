@@ -22,17 +22,14 @@ public class DepartmentSyncService(
     private readonly IDepartmentRepository _departmentRepository = departmentRepository;
 
 
-    public async Task SyncAsync(CancellationToken cancellationToken = default)
+    public async Task<List<Department>> SyncAsync(CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Синхронизация отделов начата");
         try
         {
-            _logger.LogInformation("Синхронизация отделов начата");
-
-
             // 1. Получаем отделы из IDM
             var extDepartments = await _idmLoadingService
-                .LoadDepartmentsAsync();
-
+                .LoadDepartmentsAsync(cancellationToken);
 
             // 2. Нормализуем данные IDM:
             //    string guid -> Guid
@@ -40,16 +37,12 @@ public class DepartmentSyncService(
             var departments = await _departmentNormalizer
                 .NormalizeAsync(extDepartments, cancellationToken);
 
-
             // 3. Получаем существующие отделы из БД
-            var dbDepartments = await _departmentRepository
+            //    Которые определены, как !IsManual
+            var dbDepartmentsByGuid = await _departmentRepository
                 .QueryTracking()
-                .ToListAsync(cancellationToken);
-
-
-            var dbDepartmentsByGuid = dbDepartments
-                .ToDictionary(x => x.Guid);
-
+                .Where(p => !p.IsManual)
+                .ToDictionaryAsync(x => x.Guid, cancellationToken);
 
             // 4. Добавляем новые и обновляем существующие
             var added = 0;
@@ -76,18 +69,21 @@ public class DepartmentSyncService(
                 .ToHashSet();
 
 
-            foreach (var department in dbDepartments)
+            foreach (var department in dbDepartmentsByGuid)
             {
-                if (department.IsManual)
+                if (department.Value.IsManual)
                     continue;
 
-                if (!actualDepartmentGuids.Contains(department.Guid)) department.IsActual = false;
+                if (!actualDepartmentGuids.Contains(department.Value.Guid))
+                    department.Value.IsActual = false;
             }
 
 
             _logger.LogInformation(
                 "Синхронизация отделов завершена. Получено из IDM: {Count}",
                 departments.Count);
+
+            return dbDepartmentsByGuid.Values.ToList();
         }
         catch (Exception ex)
         {
@@ -97,15 +93,15 @@ public class DepartmentSyncService(
     }
 
 
-    private static Department CreateDepartment(DepartmentDto dto) =>
-        new()
+    private static Department CreateDepartment(DepartmentDto dto)
+        => new()
         {
             Guid = dto.Guid,
 
             Name = dto.Name,
             SourceName = dto.SourceName,
             ShortName = dto.ShortName,
-
+            ParentGuid = dto.ParentGuid,
             //SupervisorGuid = dto.SupervisorGuid,
 
             IsActual = dto.IsActual,
@@ -136,6 +132,7 @@ public class DepartmentSyncService(
 
         department.IsActual = dto.IsActual;
 
+        if (!department.IsParentDepartmentDefinedManually) department.ParentGuid = dto.ParentGuid;
         // ParentGuid здесь НЕ обновляем.
         // Это ответственность DepartmentTreeUpdater.
     }
