@@ -10,6 +10,12 @@ public class ContactConfig : IEntityTypeConfiguration<Contact>
     {
         builder.ToTable("Contacts");
         builder.HasKey(p => p.Id);
+        builder.HasIndex(x => new
+        {
+            x.PersonGuid,
+            x.Type,
+            x.IsPrimary
+        });
 
         builder.Property(p => p.Value)
             .IsRequired()

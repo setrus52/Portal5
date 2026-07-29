@@ -69,6 +69,9 @@ namespace IDM.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("IsAddedManual")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsPrimary")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")

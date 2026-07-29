@@ -5,5 +5,6 @@ public enum NormalizationCategory
     All,
     Department,
     Position,
-    PhoneBranch
+    PhoneBranch,
+    Person
 }

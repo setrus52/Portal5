@@ -10,11 +10,18 @@ public class PersonConfig : IEntityTypeConfiguration<Person>
     {
         builder.ToTable("Persons");
         builder.HasKey(p => p.Guid);
+        builder.HasIndex(p => p.Code)
+            .IsUnique();
+        builder.HasIndex(p => p.Login)
+            .IsUnique()
+            .HasFilter("[Login] IS NOT NULL");
 
         builder.Property(p => p.Guid)
             .IsRequired()
             .ValueGeneratedNever();
         builder.Property(p => p.Code)
+            .IsRequired()
+            .ValueGeneratedNever()
             .HasMaxLength(32);
         builder.Property(p => p.Surname)
             .HasMaxLength(100);
@@ -23,7 +30,7 @@ public class PersonConfig : IEntityTypeConfiguration<Person>
         builder.Property(p => p.Patronymic)
             .HasMaxLength(100);
         builder.Property(p => p.Birthday)
-            .HasColumnType("datetime2");
+            .HasColumnType("date");
         builder.Property(p => p.Login)
             .HasMaxLength(100);
     }

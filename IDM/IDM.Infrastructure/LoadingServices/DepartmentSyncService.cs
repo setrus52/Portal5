@@ -115,9 +115,7 @@ public class DepartmentSyncService(
         };
 
 
-    private static void UpdateDepartment(
-        Department department,
-        DepartmentDto dto)
+    private static void UpdateDepartment(Department department, DepartmentDto dto)
     {
         // Ручные отделы не изменяем вообще
         if (department.IsManual)

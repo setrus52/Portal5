@@ -21,6 +21,8 @@ public class Contact
     /// </summary>
     public bool IsPrimary { get; set; }
 
+    public bool IsAddedManual { get; set; }
+
     public Guid PersonGuid { get; set; }
     public Person Person { get; set; } = null!;
 }

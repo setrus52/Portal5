@@ -13,7 +13,7 @@ public class Person
     /// <summary>
     /// Код физлица из 1С
     /// </summary>
-    public string? Code { get; set; } = string.Empty;
+    public string? Code { get; set; }
 
     /// <summary>
     /// Фамилия
@@ -28,7 +28,7 @@ public class Person
     /// <summary>
     /// Отчество
     /// </summary>
-    public string? Patronymic { get; set; } = string.Empty;
+    public string? Patronymic { get; set; }
 
     public string? DisplayName { get; set; }
 
@@ -45,12 +45,12 @@ public class Person
     /// <summary>
     /// Логин в домене
     /// </summary>
-    public string? Login { get; set; } = string.Empty;
+    public string? Login { get; set; }
 
     /// <summary>
     /// Домен
     /// </summary>
-    public string? Domain { get; set; } = string.Empty;
+    public string? Domain { get; set; }
 
     public string? Photo { get; set; }
 

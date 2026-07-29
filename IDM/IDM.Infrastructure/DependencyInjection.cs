@@ -83,6 +83,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IDepartmentRepository, DepartmentRepository>();
         services.AddScoped<IPositionRepository, PositionRepository>();
+        services.AddScoped<IPersonRepository, PersonRepository>();
         services.AddScoped<INormalizationRepository, NormalizationRepository>();
 
         return services;
@@ -101,6 +102,8 @@ public static class DependencyInjection
 
         services.AddScoped<IIdmPositionNormalizer, IdmPositionNormalizer>();
         services.AddScoped<IPositionNameNormalizer, PositionNameNormalizer>();
+
+        services.AddScoped<IIdmPersonNormalizer, IdmPersonNormalizer>();
 
         return services;
     }
@@ -123,9 +126,14 @@ public static class DependencyInjection
 
     private static IServiceCollection AddSynchronization(this IServiceCollection services)
     {
+        services.AddScoped<IIdmSynchronizationService, IdmSynchronizationService>();
+
         services.AddScoped<IDepartmentSyncService, DepartmentSyncService>();
         services.AddScoped<IPositionSyncService, PositionSyncService>();
-        services.AddScoped<IIdmSynchronizationService, IdmSynchronizationService>();
+
+        services.AddScoped<IPersonSyncService, PersonSyncService>();
+        services.AddScoped<IEmployeeSyncService, EmployeeSyncService>();
+
 
         return services;
     }

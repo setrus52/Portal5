@@ -20,4 +20,8 @@
         <ProjectReference Include="..\IDM.Domain\IDM.Domain.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Synchronization\Departments\Tree\" />
+    </ItemGroup>
+
 </Project>

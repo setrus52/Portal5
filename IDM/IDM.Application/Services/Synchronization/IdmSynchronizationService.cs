@@ -1,6 +1,7 @@
 ﻿using Common.Repositories;
 using IDM.Application.Abstractions.Services;
 using IDM.Application.Abstractions.Synchronization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace IDM.Application.Services.Synchronization;
@@ -8,9 +9,9 @@ namespace IDM.Application.Services.Synchronization;
 public class IdmSynchronizationService(
     ILogger<IdmSynchronizationService> logger,
     IDepartmentSyncService departmentSyncService,
-    //IPersonSyncService personSyncService,
-    //IEmployeeSyncService employeeSyncService,
     IPositionSyncService positionSyncService,
+    IPersonSyncService personSyncService,
+    IEmployeeSyncService employeeSyncService,
     //IDepartmentTreeUpdater departmentTreeUpdater,
     //ISupervisorSyncService supervisorSyncService,
     //IAbsenceSyncService absenceSyncService 
@@ -32,21 +33,12 @@ public class IdmSynchronizationService(
             var departments = await departmentSyncService
                 .SyncAsync(cancellationToken);
 
-
-            /*await employeeSyncService
-                .SyncAsync(cancellationToken);*/
-
-
             var positions = await positionSyncService
                 .SyncAsync(cancellationToken);
 
+            var persons = await personSyncService.SyncAsync(cancellationToken);
 
-            /*await departmentTreeUpdater
-                .UpdateAsync(cancellationToken);*/
-
-            // УДАЛИТЬ!!!
-            _logger.LogInformation(
-                "DepartmentSyncService завершен, вызываю SaveChanges");
+            //var employees = await employeeSyncService.SyncAsync(cancellationToken);
 
             var count = await unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -54,6 +46,23 @@ public class IdmSynchronizationService(
 
             _logger.LogInformation(
                 "Полная синхронизация IDM завершена");
+        }
+        catch (DbUpdateException ex)
+        {
+            foreach (var entry in ex.Entries)
+            {
+                _logger.LogError(
+                    "Ошибка сохранения сущности {Entity}",
+                    entry.Entity.GetType().Name);
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError(
+                        "InnerException: {Message}",
+                        ex.InnerException.Message);
+                }
+            }
+
+            throw;
         }
         catch (Exception ex)
         {
