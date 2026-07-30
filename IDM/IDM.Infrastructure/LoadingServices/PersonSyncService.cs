@@ -3,56 +3,75 @@ using IDM.Application.Abstractions.Synchronization;
 using IDM.Application.DTO;
 using IDM.Application.Repositories;
 using IDM.Application.Synchronization.Departments.Normalization;
+using IDM.Application.Synchronization.Records;
 using IDM.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace IDM.Infrastructure.LoadingServices;
 
 public class PersonSyncService(
+    ILogger<PersonSyncService> logger,
     IIdmLoadingService idmLoadingService,
-    IIdmPersonNormalizer personNormalizer,
-    IPersonRepository presonRepository
-) : IPersonSyncService
+    IIdmNormalizer<PersonDto, ExtPersonDto> personNormalizer,
+    IPersonRepository personRepository)
+    : ISyncService<Person>
 {
+    private readonly ILogger<PersonSyncService> _logger = logger;
     private readonly IIdmLoadingService _idmLoadingService = idmLoadingService;
-    private readonly IIdmPersonNormalizer _personNormalizer = personNormalizer;
-    private readonly IPersonRepository _personRepository = presonRepository;
+    private readonly IIdmNormalizer<PersonDto, ExtPersonDto> _personNormalizer = personNormalizer;
+    private readonly IPersonRepository _personRepository = personRepository;
 
     public async Task<List<Person>> SyncAsync(CancellationToken cancellationToken = default)
     {
-        // 1. Получаем физлица из IDM
-        var extPersons = await _idmLoadingService.LoadPersonsAsync(cancellationToken);
+        _logger.LogInformation("Синхронизация физических лиц начата");
 
-        // 2. Нормализуем
-        var persons = await _personNormalizer.NormalizeAsync(extPersons, cancellationToken);
-
-        // 3. Получаем существующих сотрудников
-        var dbPersonsByGuid = await _personRepository
-            .QueryTracking()
-            .Include(x => x.Contacts)
-            .ToDictionaryAsync(x => x.Guid, cancellationToken);
-
-        var changedPersons = new List<Person>(persons.Count);
-
-        foreach (var dto in persons)
+        try
         {
-            if (dbPersonsByGuid.TryGetValue(dto.Guid, out var person))
-            {
-                UpdatePersonInfo(person, dto);
-                UpdateContacts(person, dto);
+            // 1. Получаем физлица из IDM
+            var extPersons = await _idmLoadingService.LoadPersonsAsync(cancellationToken);
 
-                changedPersons.Add(person);
-            }
-            else
-            {
-                var personEntity = CreatePerson(dto);
-                _personRepository.Add(personEntity);
+            // 2. Нормализуем
+            var persons = await _personNormalizer.NormalizeAsync(extPersons, cancellationToken);
 
-                changedPersons.Add(personEntity);
+            // 3. Получаем существующих физических лиц
+            var dbPersonsByGuid = await _personRepository
+                .QueryTracking()
+                .Include(x => x.Contacts)
+                .ToDictionaryAsync(x => x.Guid, cancellationToken);
+
+            // 4. Добавляем новые и обновляем существующие
+            var added = 0;
+            var updated = 0;
+            var changedPersons = new List<Person>(persons.Count);
+
+            foreach (var dto in persons)
+            {
+                if (dbPersonsByGuid.TryGetValue(dto.Guid, out var person))
+                {
+                    UpdatePersonInfo(person, dto);
+                    UpdateContacts(person, dto);
+
+                    changedPersons.Add(person);
+                    updated++;
+                }
+                else
+                {
+                    var personEntity = CreatePerson(dto);
+                    _personRepository.Add(personEntity);
+
+                    changedPersons.Add(personEntity);
+                    added++;
+                }
             }
+            _logger.LogInformation("Физ. лица. Добавлено: {Added}, обновлено: {Updated}", added, updated);
+            return changedPersons;
         }
-
-        return changedPersons;
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при синхронизации физических лиц");
+            throw;
+        }
     }
 
     private static Person CreatePerson(PersonDto dto)
@@ -91,7 +110,7 @@ public class PersonSyncService(
         person.Birthday = dto.Birthday;
         person.Login = dto.Login;
         person.Domain = dto.Domain;
-        person.Photo = dto.Photo; // Закомментировать при преходе на местную обработку фотографий
+        person.Photo = dto.Photo; // Закомментировать при переходе на локальное хранение фотографий
     }
 
     private static void UpdateContacts(Person person, PersonDto dto)
@@ -148,19 +167,22 @@ public class PersonSyncService(
         if (!string.IsNullOrWhiteSpace(phone)) person.Contacts.Add(CreateContact(type, phone));
     }
 
-    private static void AddPhoneIfExists(Person person, PersonContactType type, string? phone)
+    private static void AddPhoneIfExists(
+        Person person,
+        PersonContactType type,
+        string? phone)
     {
         if (!string.IsNullOrWhiteSpace(phone)) person.Contacts.Add(CreateContact(type, phone));
     }
 
-    private static Contact CreateEmailContact(PersonDto dto)
-        => CreateContact(
+    private static Contact CreateEmailContact(PersonDto dto) =>
+        CreateContact(
             PersonContactType.Email,
             GetEmail(dto),
             true);
 
-    private static string GetEmail(PersonDto dto)
-        => string.IsNullOrWhiteSpace(dto.Email)
+    private static string GetEmail(PersonDto dto) =>
+        string.IsNullOrWhiteSpace(dto.Email)
             ? $"{dto.Login}@yuresk.ru"
             : dto.Email;
 

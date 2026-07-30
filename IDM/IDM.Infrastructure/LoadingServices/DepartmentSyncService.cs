@@ -3,6 +3,7 @@ using IDM.Application.Abstractions.Synchronization;
 using IDM.Application.DTO;
 using IDM.Application.Repositories;
 using IDM.Application.Synchronization.Departments.Normalization;
+using IDM.Application.Synchronization.Records;
 using IDM.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -12,85 +13,87 @@ namespace IDM.Infrastructure.LoadingServices;
 public class DepartmentSyncService(
     ILogger<DepartmentSyncService> logger,
     IIdmLoadingService idmLoadingService,
-    IIdmDepartmentNormalizer departmentNormalizer,
+    IIdmNormalizer<DepartmentDto, ExtDepartmentDto> departmentNormalizer,
     IDepartmentRepository departmentRepository)
-    : IDepartmentSyncService
+    : ISyncService<Department>
 {
     private readonly ILogger<DepartmentSyncService> _logger = logger;
     private readonly IIdmLoadingService _idmLoadingService = idmLoadingService;
-    private readonly IIdmDepartmentNormalizer _departmentNormalizer = departmentNormalizer;
+    private readonly IIdmNormalizer<DepartmentDto, ExtDepartmentDto> _departmentNormalizer = departmentNormalizer;
     private readonly IDepartmentRepository _departmentRepository = departmentRepository;
 
 
     public async Task<List<Department>> SyncAsync(CancellationToken cancellationToken = default)
+{
+    _logger.LogInformation("Синхронизация отделов начата");
+
+    try
     {
-        _logger.LogInformation("Синхронизация отделов начата");
-        try
+        // 1. Загружаем отделы из IDM
+        var extDepartments = await _idmLoadingService
+            .LoadDepartmentsAsync(cancellationToken);
+
+        // 2. Нормализуем
+        var departments = await _departmentNormalizer
+            .NormalizeAsync(extDepartments, cancellationToken);
+
+        // 3. Загружаем существующие отделы
+        var dbDepartmentsByGuid = await _departmentRepository
+            .QueryTracking()
+            .Where(x => !x.IsManual)
+            .ToDictionaryAsync(x => x.Guid, cancellationToken);
+
+        var added = 0;
+        var updated = 0;
+
+        foreach (var dto in departments)
         {
-            // 1. Получаем отделы из IDM
-            var extDepartments = await _idmLoadingService
-                .LoadDepartmentsAsync(cancellationToken);
-
-            // 2. Нормализуем данные IDM:
-            //    string guid -> Guid
-            //    string name -> нормализованное имя
-            var departments = await _departmentNormalizer
-                .NormalizeAsync(extDepartments, cancellationToken);
-
-            // 3. Получаем существующие отделы из БД
-            //    Которые определены, как !IsManual
-            var dbDepartmentsByGuid = await _departmentRepository
-                .QueryTracking()
-                .Where(p => !p.IsManual)
-                .ToDictionaryAsync(x => x.Guid, cancellationToken);
-
-            // 4. Добавляем новые и обновляем существующие
-            var added = 0;
-            var updated = 0;
-            foreach (var dto in departments)
+            if (dbDepartmentsByGuid.TryGetValue(dto.Guid, out var department))
             {
-                if (dbDepartmentsByGuid.TryGetValue(dto.Guid, out var department))
-                {
-                    UpdateDepartment(department, dto);
-                    updated++;
-                }
-                else
-                {
-                    _departmentRepository.Add(CreateDepartment(dto));
-                    added++;
-                }
+                UpdateDepartment(department, dto);
+                updated++;
             }
-
-            _logger.LogInformation("Отделы. Добавлено: {Added}, обновлено: {Updated}", added, updated);
-
-            // 5. Деактивируем отделы, которых больше нет в IDM
-            var actualDepartmentGuids = departments
-                .Select(x => x.Guid)
-                .ToHashSet();
-
-
-            foreach (var department in dbDepartmentsByGuid)
+            else
             {
-                if (department.Value.IsManual)
-                    continue;
+                department = CreateDepartment(dto);
 
-                if (!actualDepartmentGuids.Contains(department.Value.Guid))
-                    department.Value.IsActual = false;
+                _departmentRepository.Add(department);
+
+                // Добавляем в словарь, чтобы итоговая коллекция была актуальной
+                dbDepartmentsByGuid.Add(department.Guid, department);
+
+                added++;
             }
-
-
-            _logger.LogInformation(
-                "Синхронизация отделов завершена. Получено из IDM: {Count}",
-                departments.Count);
-
-            return dbDepartmentsByGuid.Values.ToList();
         }
-        catch (Exception ex)
+
+        _logger.LogInformation(
+            "Отделы. Добавлено: {Added}, обновлено: {Updated}",
+            added,
+            updated);
+
+        // 4. Деактивируем отсутствующие в IDM отделы
+        var actualDepartmentGuids = departments
+            .Select(x => x.Guid)
+            .ToHashSet();
+
+        foreach (var department in dbDepartmentsByGuid.Values)
         {
-            _logger.LogError(ex, "Ошибка при синхронизации отделов");
-            throw;
+            if (!actualDepartmentGuids.Contains(department.Guid))
+                department.IsActual = false;
         }
+
+        _logger.LogInformation(
+            "Синхронизация отделов завершена. Получено из IDM: {Count}",
+            departments.Count);
+
+        return dbDepartmentsByGuid.Values.ToList();
     }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Ошибка при синхронизации отделов");
+        throw;
+    }
+}
 
 
     private static Department CreateDepartment(DepartmentDto dto)
@@ -120,7 +123,6 @@ public class DepartmentSyncService(
         // Ручные отделы не изменяем вообще
         if (department.IsManual)
             return;
-
 
         department.Name = dto.Name;
         department.SourceName = dto.SourceName;

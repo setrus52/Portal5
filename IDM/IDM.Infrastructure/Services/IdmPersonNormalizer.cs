@@ -5,7 +5,9 @@ using IDM.Application.Synchronization.Records;
 
 namespace IDM.Infrastructure.Services;
 
-public class IdmPersonNormalizer(IIdmGuidConverter guidConverter) : IIdmPersonNormalizer
+public class IdmPersonNormalizer(
+    IIdmGuidConverter guidConverter)
+    : IIdmNormalizer<PersonDto, ExtPersonDto>
 {
     private readonly IIdmGuidConverter _guidConverter = guidConverter;
 

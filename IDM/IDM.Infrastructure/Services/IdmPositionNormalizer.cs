@@ -7,12 +7,12 @@ namespace IDM.Infrastructure.Services;
 
 public class IdmPositionNormalizer(
     INormalizationProvider normalizationProvider,
-    IPositionNameNormalizer positionNormalizer,
+    IFieldNormalizer fieldNormalizer,
     IIdmGuidConverter guidConverter
-) : IIdmPositionNormalizer
+) : IIdmNormalizer<PositionDto, ExtPositionDto>
 {
     private readonly INormalizationProvider _normalizationProvider = normalizationProvider;
-    private readonly IPositionNameNormalizer _positionNormalizer = positionNormalizer;
+    private readonly IFieldNormalizer _fieldNormalizer = fieldNormalizer;
     private readonly IIdmGuidConverter _guidConverter = guidConverter;
 
     public async Task<List<PositionDto>> NormalizeAsync(
@@ -26,7 +26,7 @@ public class IdmPositionNormalizer(
             .Select(p => new PositionDto
             {
                 Guid = _guidConverter.Convert(p.guid),
-                Name = _positionNormalizer.Normalize(p.name, rules),
+                Name = _fieldNormalizer.Normalize(p.name, rules),
                 Order = p.orderPos
             })
             .ToList();

@@ -63,7 +63,7 @@ public class Employee
 
 
     public DateTime? NextPlannedVacationDate { get; set; }
-    public decimal VacationRemainingDays { get; set; }
+    public decimal? VacationRemainingDays { get; set; }
 
     /// <summary>
     /// Руководитель отделов

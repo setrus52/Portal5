@@ -1,12 +1,8 @@
-using IDM.Application.Abstractions.Services;
-using IDM.Application.Abstractions.Synchronization;
 using IDM.Infrastructure;
 using IDM.Infrastructure.Jobs;
-using IDM.Infrastructure.LoadingServices;
 using IDM.Infrastructure.Options.EndpointOptions;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Authentication.Negotiate;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
 

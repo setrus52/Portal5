@@ -2,7 +2,7 @@
 
 namespace IDM.Application.Synchronization.Departments.Normalization;
 
-public interface IPositionNameNormalizer
+public interface IFieldNormalizer
 {
-    string Normalize(string sourceName, NormalizationRules rules);
+    string Normalize(string value, NormalizationRules rules);
 }

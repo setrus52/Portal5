@@ -1,4 +1,4 @@
-﻿using IDM.Application.DTO;
+using IDM.Application.DTO;
 using IDM.Application.Synchronization;
 using IDM.Application.Synchronization.Departments;
 using IDM.Application.Synchronization.Departments.Normalization;
@@ -8,12 +8,12 @@ namespace IDM.Infrastructure.Services;
 
 public class IdmDepartmentNormalizer(
     INormalizationProvider normalizationProvider,
-    IDepartmentNameNormalizer departmentNameNormalizer,
+    IFieldNormalizer fieldNormalizer,
     IIdmGuidConverter guidConverter)
-    : IIdmDepartmentNormalizer
+    : IIdmNormalizer<DepartmentDto, ExtDepartmentDto>
 {
     private readonly INormalizationProvider _normalizationProvider = normalizationProvider;
-    private readonly IDepartmentNameNormalizer _departmentNameNormalizer = departmentNameNormalizer;
+    private readonly IFieldNormalizer _fieldNormalizer = fieldNormalizer;
     private readonly IIdmGuidConverter _guidConverter = guidConverter;
 
     public async Task<List<DepartmentDto>> NormalizeAsync(
@@ -27,7 +27,7 @@ public class IdmDepartmentNormalizer(
             .Select(d => new DepartmentDto
             {
                 Guid = _guidConverter.Convert(d.guid),
-                Name = _departmentNameNormalizer.Normalize(d.name, rules),
+                Name = _fieldNormalizer.Normalize(d.name, rules),
                 SourceName = d.name,
                 ShortName = d.shortName,
                 ParentGuid = _guidConverter.ConvertNullable(d.parent),

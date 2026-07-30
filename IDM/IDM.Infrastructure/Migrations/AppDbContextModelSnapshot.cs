@@ -90,7 +90,7 @@ namespace IDM.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PersonGuid");
+                    b.HasIndex("PersonGuid", "Type", "IsPrimary");
 
                     b.ToTable("Contacts", (string)null);
                 });
@@ -189,7 +189,7 @@ namespace IDM.Infrastructure.Migrations
                     b.Property<Guid>("PositionGuid")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<decimal>("VacationRemainingDays")
+                    b.Property<decimal?>("VacationRemainingDays")
                         .HasPrecision(6, 2)
                         .HasColumnType("decimal");
 
@@ -271,9 +271,10 @@ namespace IDM.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("Birthday")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("date");
 
                     b.Property<string>("Code")
+                        .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("nvarchar(32)");
 
@@ -308,6 +309,13 @@ namespace IDM.Infrastructure.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Guid");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("Login")
+                        .IsUnique()
+                        .HasFilter("[Login] IS NOT NULL");
 
                     b.ToTable("Persons", (string)null);
                 });

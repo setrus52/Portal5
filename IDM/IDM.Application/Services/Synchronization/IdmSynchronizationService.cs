@@ -1,6 +1,7 @@
 ﻿using Common.Repositories;
 using IDM.Application.Abstractions.Services;
 using IDM.Application.Abstractions.Synchronization;
+using IDM.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -8,10 +9,10 @@ namespace IDM.Application.Services.Synchronization;
 
 public class IdmSynchronizationService(
     ILogger<IdmSynchronizationService> logger,
-    IDepartmentSyncService departmentSyncService,
-    IPositionSyncService positionSyncService,
-    IPersonSyncService personSyncService,
-    IEmployeeSyncService employeeSyncService,
+    ISyncService<Department> departmentSyncService,
+    ISyncService<Position> positionSyncService,
+    ISyncService<Person> personSyncService,
+    ISyncService<Employee> employeeSyncService,
     //IDepartmentTreeUpdater departmentTreeUpdater,
     //ISupervisorSyncService supervisorSyncService,
     //IAbsenceSyncService absenceSyncService 
@@ -38,7 +39,7 @@ public class IdmSynchronizationService(
 
             var persons = await personSyncService.SyncAsync(cancellationToken);
 
-            //var employees = await employeeSyncService.SyncAsync(cancellationToken);
+            var employees = await employeeSyncService.SyncAsync(cancellationToken);
 
             var count = await unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -55,11 +56,9 @@ public class IdmSynchronizationService(
                     "Ошибка сохранения сущности {Entity}",
                     entry.Entity.GetType().Name);
                 if (ex.InnerException != null)
-                {
                     _logger.LogError(
                         "InnerException: {Message}",
                         ex.InnerException.Message);
-                }
             }
 
             throw;
