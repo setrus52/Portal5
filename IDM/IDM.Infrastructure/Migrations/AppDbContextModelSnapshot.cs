@@ -351,10 +351,7 @@ namespace IDM.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
-                    b.HasKey("DepartmentGuid", "EmployeeGuid");
-
-                    b.HasIndex("DepartmentGuid")
-                        .IsUnique();
+                    b.HasKey("DepartmentGuid");
 
                     b.HasIndex("EmployeeGuid");
 

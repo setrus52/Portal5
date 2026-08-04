@@ -9,19 +9,24 @@ public class SupervisorConfig : IEntityTypeConfiguration<Supervisor>
     public void Configure(EntityTypeBuilder<Supervisor> builder)
     {
         builder.ToTable("Supervisors");
-        builder.HasKey(p => new { p.DepartmentGuid, p.EmployeeGuid });
 
-        builder.Property(p => p.DepartmentGuid)
+        builder.HasKey(x => x.DepartmentGuid);
+
+        builder.Property(x => x.DepartmentGuid)
+            .ValueGeneratedNever();
+
+        builder.Property(x => x.EmployeeGuid)
             .IsRequired()
             .ValueGeneratedNever();
 
-        builder.Property(p => p.EmployeeGuid)
-            .IsRequired()
-            .ValueGeneratedNever();
-
-        builder.Property(p => p.IsManual)
+        builder.Property(x => x.IsManual)
             .IsRequired()
             .HasColumnType("bit")
             .HasDefaultValue(false);
+
+        builder.HasOne(x => x.Department)
+            .WithOne(x => x.Supervisor)
+            .HasForeignKey<Supervisor>(x => x.DepartmentGuid)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

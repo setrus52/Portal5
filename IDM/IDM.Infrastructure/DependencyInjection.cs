@@ -1,11 +1,14 @@
 ﻿using Common.Repositories;
 using IDM.Application.Abstractions.Services;
 using IDM.Application.Abstractions.Synchronization;
+using IDM.Application.DTO;
 using IDM.Application.Repositories;
 using IDM.Application.Services.Synchronization;
 using IDM.Application.Synchronization;
 using IDM.Application.Synchronization.Departments;
 using IDM.Application.Synchronization.Departments.Normalization;
+using IDM.Application.Synchronization.Records;
+using IDM.Domain.Entities;
 using IDM.Infrastructure.Jobs;
 using IDM.Infrastructure.Repositories;
 using IDM.Infrastructure.LoadingServices;
@@ -85,6 +88,7 @@ public static class DependencyInjection
         services.AddScoped<IPositionRepository, PositionRepository>();
         services.AddScoped<IPersonRepository, PersonRepository>();
         services.AddScoped<INormalizationRepository, NormalizationRepository>();
+        services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 
         return services;
     }
@@ -96,15 +100,11 @@ public static class DependencyInjection
     private static IServiceCollection AddNormalization(this IServiceCollection services)
     {
         services.AddScoped<INormalizationProvider, NormalizationProvider>();
-
-        services.AddScoped<IIdmDepartmentNormalizer, IdmDepartmentNormalizer>();
-        services.AddScoped<IDepartmentNameNormalizer, DepartmentNameNormalizer>();
-
-        services.AddScoped<IIdmPositionNormalizer, IdmPositionNormalizer>();
-        services.AddScoped<IPositionNameNormalizer, PositionNameNormalizer>();
-
-        services.AddScoped<IIdmPersonNormalizer, IdmPersonNormalizer>();
-
+        services.AddScoped<IFieldNormalizer, FieldNormalizer>();
+        services.AddScoped<IIdmNormalizer<DepartmentDto, ExtDepartmentDto>, IdmDepartmentNormalizer>();
+        services.AddScoped<IIdmNormalizer<PositionDto, ExtPositionDto>, IdmPositionNormalizer>();
+        services.AddScoped<IIdmNormalizer<PersonDto, ExtPersonDto>, IdmPersonNormalizer>();
+        services.AddScoped<IIdmNormalizer<EmployeeDto, ExtEmployeeDto>, IdmEmployeeNormalizer>();
         return services;
     }
 
@@ -128,11 +128,11 @@ public static class DependencyInjection
     {
         services.AddScoped<IIdmSynchronizationService, IdmSynchronizationService>();
 
-        services.AddScoped<IDepartmentSyncService, DepartmentSyncService>();
-        services.AddScoped<IPositionSyncService, PositionSyncService>();
+        services.AddScoped<ISyncService<Department>, DepartmentSyncService>();
+        services.AddScoped<ISyncService<Position>, PositionSyncService>();
 
-        services.AddScoped<IPersonSyncService, PersonSyncService>();
-        services.AddScoped<IEmployeeSyncService, EmployeeSyncService>();
+        services.AddScoped<ISyncService<Person>, PersonSyncService>();
+        services.AddScoped<ISyncService<Employee>, EmployeeSyncService>();
 
 
         return services;

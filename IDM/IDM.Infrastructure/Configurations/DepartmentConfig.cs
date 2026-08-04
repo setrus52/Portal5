@@ -40,9 +40,6 @@ public class DepartmentConfig : IEntityTypeConfiguration<Department>
         builder.Property(p => p.IsActual)
             .HasColumnType("bit")
             .HasDefaultValue(true);
-        builder.Property(p => p.IsManual)
-            .HasColumnType("bit")
-            .HasDefaultValue(false);
         builder.Property(p => p.IsHeadOfBranch)
             .HasColumnType("bit")
             .HasDefaultValue(false);

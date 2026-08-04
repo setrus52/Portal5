@@ -24,80 +24,82 @@ public class DepartmentSyncService(
 
 
     public async Task<List<Department>> SyncAsync(CancellationToken cancellationToken = default)
-{
-    _logger.LogInformation("Синхронизация отделов начата");
-
-    try
     {
-        // 1. Загружаем отделы из IDM
-        var extDepartments = await _idmLoadingService
-            .LoadDepartmentsAsync(cancellationToken);
+        _logger.LogInformation("Синхронизация отделов начата");
 
-        // 2. Нормализуем
-        var departments = await _departmentNormalizer
-            .NormalizeAsync(extDepartments, cancellationToken);
-
-        // 3. Загружаем существующие отделы
-        var dbDepartmentsByGuid = await _departmentRepository
-            .QueryTracking()
-            .Where(x => !x.IsManual)
-            .ToDictionaryAsync(x => x.Guid, cancellationToken);
-
-        var added = 0;
-        var updated = 0;
-
-        foreach (var dto in departments)
+        try
         {
-            if (dbDepartmentsByGuid.TryGetValue(dto.Guid, out var department))
+            // 1. Загружаем отделы из IDM
+            var extDepartments = await _idmLoadingService
+                .LoadDepartmentsAsync(cancellationToken);
+
+            // 2. Нормализуем
+            var departments = await _departmentNormalizer
+                .NormalizeAsync(extDepartments, cancellationToken);
+
+            // 3. Загружаем существующие отделы
+            var dbDepartmentsByGuid = await _departmentRepository
+                .QueryTracking()
+                .Include(p => p.Supervisor)
+                .Where(x => !x.IsManual)
+                .ToDictionaryAsync(x => x.Guid, cancellationToken);
+
+            var added = 0;
+            var updated = 0;
+
+            foreach (var dto in departments)
             {
-                UpdateDepartment(department, dto);
-                updated++;
+                if (dbDepartmentsByGuid.TryGetValue(dto.Guid, out var department))
+                {
+                    UpdateDepartment(department, dto);
+                    updated++;
+                }
+                else
+                {
+                    department = CreateDepartment(dto);
+
+                    _departmentRepository.Add(department);
+
+                    // Добавляем в словарь, чтобы итоговая коллекция была актуальной
+                    dbDepartmentsByGuid.Add(department.Guid, department);
+
+                    added++;
+                }
             }
-            else
+
+            _logger.LogInformation(
+                "Отделы. Добавлено: {Added}, обновлено: {Updated}",
+                added,
+                updated);
+
+            // 4. Деактивируем отсутствующие в IDM отделы
+            var actualDepartmentGuids = departments
+                .Select(x => x.Guid)
+                .ToHashSet();
+
+            foreach (var department in dbDepartmentsByGuid.Values)
             {
-                department = CreateDepartment(dto);
-
-                _departmentRepository.Add(department);
-
-                // Добавляем в словарь, чтобы итоговая коллекция была актуальной
-                dbDepartmentsByGuid.Add(department.Guid, department);
-
-                added++;
+                if (!actualDepartmentGuids.Contains(department.Guid))
+                    department.IsActual = false;
             }
+
+            _logger.LogInformation(
+                "Синхронизация отделов завершена. Получено из IDM: {Count}",
+                departments.Count);
+
+            return dbDepartmentsByGuid.Values.ToList();
         }
-
-        _logger.LogInformation(
-            "Отделы. Добавлено: {Added}, обновлено: {Updated}",
-            added,
-            updated);
-
-        // 4. Деактивируем отсутствующие в IDM отделы
-        var actualDepartmentGuids = departments
-            .Select(x => x.Guid)
-            .ToHashSet();
-
-        foreach (var department in dbDepartmentsByGuid.Values)
+        catch (Exception ex)
         {
-            if (!actualDepartmentGuids.Contains(department.Guid))
-                department.IsActual = false;
+            _logger.LogError(ex, "Ошибка при синхронизации отделов");
+            throw;
         }
-
-        _logger.LogInformation(
-            "Синхронизация отделов завершена. Получено из IDM: {Count}",
-            departments.Count);
-
-        return dbDepartmentsByGuid.Values.ToList();
     }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Ошибка при синхронизации отделов");
-        throw;
-    }
-}
 
 
     private static Department CreateDepartment(DepartmentDto dto)
-        => new()
+    {
+        var department = new Department
         {
             Guid = dto.Guid,
 
@@ -105,8 +107,6 @@ public class DepartmentSyncService(
             SourceName = dto.SourceName,
             ShortName = dto.ShortName,
             ParentGuid = dto.ParentGuid,
-            //SupervisorGuid = dto.SupervisorGuid,
-
             IsActual = dto.IsActual,
 
             // Новый отдел пришел из IDM,
@@ -116,6 +116,17 @@ public class DepartmentSyncService(
             // Родитель будет определяться автоматически
             IsParentDepartmentDefinedManually = false
         };
+
+        if (dto.SupervisorGuid is not null)
+            department.Supervisor = new Supervisor
+            {
+                DepartmentGuid = dto.Guid,
+                EmployeeGuid = dto.SupervisorGuid.Value,
+                IsManual = false
+            };
+
+        return department;
+    }
 
 
     private static void UpdateDepartment(Department department, DepartmentDto dto)
@@ -133,7 +144,43 @@ public class DepartmentSyncService(
         department.IsActual = dto.IsActual;
 
         if (!department.IsParentDepartmentDefinedManually) department.ParentGuid = dto.ParentGuid;
-        // ParentGuid здесь НЕ обновляем.
-        // Это ответственность DepartmentTreeUpdater.
+
+        UpdateSupervisor(department, dto.SupervisorGuid);
+    }
+
+    private static void UpdateSupervisor(
+        Department department,
+        Guid? supervisorGuid)
+    {
+        // Руководитель назначен вручную — не трогаем
+        if (department.Supervisor?.IsManual == true)
+            return;
+
+        // В IDM руководитель отсутствует
+        if (supervisorGuid is null)
+        {
+            department.Supervisor = null;
+            return;
+        }
+
+        // Руководителя еще нет — создаем
+        if (department.Supervisor is null)
+        {
+            department.Supervisor = new Supervisor
+            {
+                DepartmentGuid = department.Guid,
+                EmployeeGuid = supervisorGuid.Value,
+                IsManual = false
+            };
+
+            return;
+        }
+
+        // Руководитель не изменился
+        if (department.Supervisor.EmployeeGuid == supervisorGuid.Value)
+            return;
+
+        // Обновляем ссылку на нового руководителя
+        department.Supervisor.EmployeeGuid = supervisorGuid.Value;
     }
 }

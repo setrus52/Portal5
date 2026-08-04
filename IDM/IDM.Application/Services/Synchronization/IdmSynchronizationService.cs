@@ -30,17 +30,15 @@ public class IdmSynchronizationService(
             _logger.LogInformation(
                 "Полная синхронизация IDM начата");
 
-
-            var departments = await departmentSyncService
-                .SyncAsync(cancellationToken);
-
             var positions = await positionSyncService
                 .SyncAsync(cancellationToken);
-
-            var persons = await personSyncService.SyncAsync(cancellationToken);
-
-            var employees = await employeeSyncService.SyncAsync(cancellationToken);
-
+            var persons = await personSyncService
+                .SyncAsync(cancellationToken);
+            var departments = await departmentSyncService
+                                        .SyncAsync(cancellationToken);
+            var employees = await employeeSyncService
+                .SyncAsync(cancellationToken);
+            
             var count = await unitOfWork.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("EF сохранил изменений: {Count}", count);
